@@ -14,6 +14,17 @@ interface CustomUser {
   token?: string;
 }
 
+interface retrievedUser {
+  profilePic? : String;
+  username?:String
+  bio?:String;
+  followers?:number;
+  following?:number;
+  postCount?:number;
+  badges?:object;
+  likenessScore?:number;
+}
+
 class UserManagement {
   static async signUp(req: Request, res: Response): Promise<void> {
     try {
@@ -122,6 +133,68 @@ class UserManagement {
     } catch (error) {
       console.error("Error in login:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+
+  static async getUsers(req:Request, res:Response):Promise<void>{
+    const token = req.headers.authorization;
+    const {userId} = req.query;
+    if(!token){
+      res.json({message:"user id not found"});
+      return;
+    }
+
+    const user = await prisma.user.findFirst({
+      where:{id:userId as string}
+    })
+
+    const retrievedUser : retrievedUser = {
+      profilePic:user?.profilePic||"",
+      username:user?.username||"",
+      bio:user?.bio||"",
+      followers:user?.followers,
+      following:user?.following,
+      postCount:user?.postCount??0,
+      badges:(typeof user?.badges==="object" && user.badges!=null ? user.badges:{}) as object,
+      likenessScore:user?.likenessScore??0
+    }
+    if(user){
+      res.json({message:"user returned", retrievedUser})
+      return;
+    }else{
+      res.json({message:"user not found"})
+      return;
+    }
+  }
+
+  static async autocomplete(req:Request, res: Response):Promise<void> {
+    try{
+      const {query}= req.query;
+      if (!query || typeof query !== "string") {
+        res.status(400).json({ message: "Query parameter is required" });
+        return;
+      }
+
+      const users = await prisma.user.findMany({
+        where:{
+          username:{
+            contains:query,
+            mode:"insensitive"
+          }
+        },
+        select:{
+          id:true,
+          username:true
+        },take:10
+      })
+      
+      res.json({message:"users returned", users});
+      return;
+
+    }catch(err){
+      res.status(500).json({ message: "Internal server error" });
+      return;
     }
   }
 }
