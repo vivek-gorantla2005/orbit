@@ -10,12 +10,22 @@ datasource db {
 model User{
   id         String    @id @default(uuid()) 
   username   String    @unique
+  profilePic String?
+  bio        String?
+
   email      String    @unique
   password   String
   token      String?
   createdAt  DateTime  @default(now())
 
   userStatus String?
+
+  followers Int   @default(0)
+  following Int   @default(0)
+  postCount Int @default(0)
+
+  likenessScore Float? @default(0.0) 
+  badges      Json? 
 
   sentRequests FriendReq[]  @relation("senderFriendReq")
   receivedRequests FriendReq[] @relation("receiverFriendReq")

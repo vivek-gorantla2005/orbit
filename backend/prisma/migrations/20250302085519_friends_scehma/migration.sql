@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "badges" JSONB,
+ADD COLUMN     "bio" TEXT,
+ADD COLUMN     "followers" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "following" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "likenessScore" DOUBLE PRECISION DEFAULT 0.0,
+ADD COLUMN     "postCount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "profilePic" TEXT;
