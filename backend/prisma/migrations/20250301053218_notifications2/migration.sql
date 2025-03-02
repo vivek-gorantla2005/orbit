@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Notifications" ADD COLUMN     "read" BOOLEAN NOT NULL DEFAULT false,
+ALTER COLUMN "createdAt" DROP DEFAULT,
+ALTER COLUMN "createdAt" SET DATA TYPE TEXT;

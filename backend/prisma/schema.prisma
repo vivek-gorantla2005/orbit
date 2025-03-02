@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User{
+  id         String    @id @default(uuid()) 
+  username   String    @unique
+  email      String    @unique
+  password   String
+  token      String?
+  createdAt  DateTime  @default(now())
+
+  userStatus String?
+
+  sentRequests FriendReq[]  @relation("senderFriendReq")
+  receivedRequests FriendReq[] @relation("receiverFriendReq")
+
+  userFriends   Friendship[] @relation("userFriend")
+  userFriendsOf Friendship[] @relation("FriendOf")
+
+  notificationSent Notifications[] @relation("sentBy")
+  notificationReceived Notifications[] @relation("sentTo")
+}
+
+model FriendReq{
+  id String @id @default(uuid())
+  senderId String
+  receiverId String
+  friendshipId  String?
+  sender User @relation("senderFriendReq",fields: [senderId], references: [id])
+  receiver User @relation("receiverFriendReq",fields: [receiverId], references: [id])
+  accepted Boolean @default(false)
+
+  @@unique([senderId,receiverId])
+}
+
+model Friendship{
+  id String @id @default(uuid())
+  userId String
+  friendId String
+  user User @relation("userFriend",fields: [userId], references: [id])
+  friend User @relation("FriendOf",fields: [friendId], references: [id])
+
+  @@unique([userId,friendId])
+  @@unique([friendId, userId])
+}
+
+model Notifications{
+  id String @id @default(uuid())
+  senderId String
+  receiverId String
+  type  NotificationsType
+  title String
+  content String
+  createdAt String
+  read  Boolean @default(false)
+  sender User @relation("sentBy", fields: [senderId], references: [id])
+  sentBy User @relation("sentTo",fields: [receiverId],references: [id])
+}
+
+enum NotificationsType{
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
+  MESSAGE_RECEIVED
+}
