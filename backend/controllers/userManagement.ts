@@ -138,13 +138,10 @@ class UserManagement {
 
 
   static async getUsers(req:Request, res:Response):Promise<void>{
-    const token = req.headers.authorization;
-    const {userId} = req.query;
-    if(!token){
-      res.json({message:"user id not found"});
-      return;
-    }
+    const userId = req.query.userId as string | undefined;
 
+    console.log(userId);
+  
     const user = await prisma.user.findFirst({
       where:{id:userId as string}
     })
@@ -170,12 +167,12 @@ class UserManagement {
 
   static async autocomplete(req:Request, res: Response):Promise<void> {
     try{
-      const {query}= req.query;
+      const query = req.query.query as string | undefined; 
       if (!query || typeof query !== "string") {
         res.status(400).json({ message: "Query parameter is required" });
         return;
       }
-
+      console.log(query);
       const users = await prisma.user.findMany({
         where:{
           username:{
