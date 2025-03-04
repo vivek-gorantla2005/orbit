@@ -18,7 +18,12 @@ export default class NotificationsProducer {
             const sender = await prisma.user.findFirst({ where: { id: senderId } });
             const receiver = await prisma.user.findFirst({ where: { id: receiverId } });
             if (!sender) {
-                res.status(404).json({ message: "receiver not found" });
+                res.status(404).json({ message: "sender not found" });
+                return;
+            }
+
+            if(!receiver){
+                res.status(404).json({message:"receiver not found"})
                 return;
             }
     

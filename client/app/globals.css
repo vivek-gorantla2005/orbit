@@ -76,3 +76,7 @@
   -ms-overflow-style: none; /* Hide scrollbar in IE/Edge */
   scrollbar-width: none; /* Hide scrollbar in Firefox */
 }
+
+.custom-toast {
+  margin-top: 60px !important;
+}

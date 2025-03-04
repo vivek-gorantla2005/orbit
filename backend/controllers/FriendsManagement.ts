@@ -71,10 +71,12 @@ class FriendManagement {
     }
 
     public static async acceptFriendRequest(req: Request, res: Response): Promise<void> {
-        const {friendshipId} = req.body;
+        const {senderId,receiverId} = req.body;
         try{
             const findReq = await prisma.friendReq.findFirst({
-                where:{friendshipId},
+                where:{
+                    friendshipId : senderId+receiverId
+                }
             })
 
             if(findReq){
@@ -217,8 +219,9 @@ class FriendManagement {
                 },
                 select: {
                     id: true,
-                    email: true,
                     username: true,
+                    userStatus:true,
+                    profilePic:true
                 },
             });
 

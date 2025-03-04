@@ -34,6 +34,7 @@ export default function RootLayout({
           <SocketManager/>
             <Navbar />
             {children}
+           
         </SessionProvider>
         </body>
       </html>

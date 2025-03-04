@@ -2,9 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { BACKEND_ROUTE } from '@/backendRoutes';
+import { useSession } from 'next-auth/react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const FriendProfile = ({ selectedUser }) => {
     const [user, setUser] = useState(null);
+    const { data: session } = useSession();
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -13,6 +17,7 @@ const FriendProfile = ({ selectedUser }) => {
                 setUser(req.data.retrievedUser);
             } catch (error) {
                 console.error("Error fetching user:", error);
+                toast.error("Failed to fetch user data");
             }
         };
 
@@ -21,12 +26,39 @@ const FriendProfile = ({ selectedUser }) => {
         }
     }, [selectedUser]);
 
+    const handleFollowReq = async () => {
+        try {
+            const res = await axios.post(`${BACKEND_ROUTE}/api/sendFriendReq`, {
+                senderId: session?.user?.id,
+                receiverId: selectedUser
+            });
+
+            if (res) {
+                
+                const notificationRes = await axios.post(`${BACKEND_ROUTE}/api/friendReqNotifications`, {
+                    senderId: session?.user?.id,
+                    receiverId: selectedUser
+                });
+                
+                if (notificationRes) {
+                    toast.success("Friend request sent!");
+                }
+            }
+        } catch (e) {
+            console.error("Error sending friend request:", e);
+            toast.error("Failed to send friend request");
+        }
+    };
+
     if (!user) {
         return <div>Loading...</div>;
     }
 
     return (
         <div className="rounded-lg w-96 p-4 border shadow-lg bg-white">
+            {/* Toast Notification */}
+            <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+
             {/* Profile Header */}
             <div className="flex gap-4 items-center">
                 {/* Profile Picture */}
@@ -89,7 +121,10 @@ const FriendProfile = ({ selectedUser }) => {
 
             {/* Card Actions */}
             <div className="mt-5 flex gap-4">
-                <button className="bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-700 transition">
+                <button
+                    className="bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-700 transition"
+                    onClick={handleFollowReq}
+                >
                     Follow
                 </button>
                 <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow-md hover:bg-gray-300 transition">
