@@ -34,6 +34,13 @@ model User{
 
   notificationSent Notifications[] @relation("sentBy")
   notificationReceived Notifications[] @relation("sentTo")
+
+  
+  conversations1 Conversation[] @relation("User1Conversations")
+  conversations2 Conversation[] @relation("User2Conversations")
+
+  messagesSent Message[] @relation("MessagesSent")
+  messagesReceived Message[] @relation("MessagesReceived")
 }
 
 model FriendReq{
@@ -70,6 +77,36 @@ model Notifications{
   read  Boolean @default(false)
   sender User @relation("sentBy", fields: [senderId], references: [id])
   sentBy User @relation("sentTo",fields: [receiverId],references: [id])
+}
+
+model Conversation {
+  id             String    @id @default(uuid())
+  conversationId String
+  senderId       String
+  receiverId     String
+
+  sender         User      @relation("User1Conversations", fields: [senderId], references: [id])
+  receiver       User      @relation("User2Conversations", fields: [receiverId], references: [id])
+
+  messages       Message[] @relation("ConversationMessages")
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([senderId, receiverId]) 
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  senderId       String
+  receiverId     String
+  conversationId String
+  content        String
+  createdAt      DateTime     @default(now())
+
+  sender         User         @relation("MessagesSent", fields: [senderId], references: [id])
+  receiver       User         @relation("MessagesReceived", fields: [receiverId], references: [id])
+  conversation   Conversation @relation("ConversationMessages", fields: [conversationId], references: [id])
 }
 
 enum NotificationsType{

@@ -34,9 +34,11 @@ const SideBar = ({ notifications }) => {
   };
 
   return (
-    <div className="flex flex-col justify-between h-[82vh] w-16 text-white rounded-xl p-3 shadow-md">
-      {/* Toast Container for Notifications */}
+    <>
       <ToastContainer position="bottom-center" autoClose={3000} hideProgressBar={false} />
+
+    <div className="m-0 flex flex-col justify-between h-[82vh] w-16 text-white rounded-xl p-3 shadow-md">
+      {/* Toast Container for Notifications */}
 
       {/* Top Icons */}
       <div className="flex flex-col gap-5 items-center">
@@ -69,7 +71,7 @@ const SideBar = ({ notifications }) => {
                       alt="accept" 
                       className='cursor-pointer' 
                       onClick={() => acceptFriendreq(notification.senderId, notification.receiverId)}
-                    />
+                      />
                     <img src="reject.svg" alt="reject" className='cursor-pointer'/>
                   </div>
                 ))
@@ -87,6 +89,7 @@ const SideBar = ({ notifications }) => {
         <img src="settings.svg" alt="settings" className="w-10 h-10 filter invert-[20%] brightness-0 saturate-0"/>
       </div>
     </div>
+  </>
   );
 };
 
