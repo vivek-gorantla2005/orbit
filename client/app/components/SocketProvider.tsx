@@ -1,10 +1,21 @@
-'use client'
-import { useEffect, useRef } from "react";
+"use client";
+import { useEffect, useRef, useContext } from "react";
 import { io, Socket } from "socket.io-client";
 import { BACKEND_ROUTE } from "@/backendRoutes";
 import { useSession } from "next-auth/react";
+import { SocketContext } from "../context/SocketCustomContext";
 
-const SocketManager = ({ onNotification,onMessage}) => {
+const SocketManager = () => {
+  const currentContext = useContext(SocketContext);
+
+  const handleNewNotification = (notification) => {
+    currentContext.setNotifications((prev) => [...prev, notification]);
+  };
+
+  const handleNewMessage = (message) => {
+    currentContext.setMessages((prev) => [...prev, message]);
+  };
+
   const socketRef = useRef<Socket | null>(null);
   const { data: session } = useSession();
 
@@ -39,13 +50,8 @@ const SocketManager = ({ onNotification,onMessage}) => {
       socket.emit("join", userId);
     });
 
-    socket.on("friend-request", (notification) => {
-      onNotification(notification);
-    });
-
-    socket.on("message",(message)=>{
-      onMessage(message);
-    })
+    socket.on("friend-request", handleNewNotification);
+    socket.on("message", handleNewMessage);
 
     return () => {
       if (socketRef.current) {
@@ -53,7 +59,7 @@ const SocketManager = ({ onNotification,onMessage}) => {
         console.log("Socket disconnected");
       }
     };
-  }, [session?.user?.id, onNotification,onMessage]);
+  }, [session?.user?.id]);
 
   return null;
 };

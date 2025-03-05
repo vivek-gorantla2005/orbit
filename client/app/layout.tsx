@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 import SessionProvider from "./components/SessionProvider";
 import SocketManager from "./components/SocketProvider";
+import { SocketContextProvider } from "./context/SocketCustomContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,17 +27,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SessionProvider>
-          <SocketManager/>
+          <SocketContextProvider> 
+            <SocketManager />
             <Navbar />
             {children}
-           
+          </SocketContextProvider>
         </SessionProvider>
-        </body>
-      </html>
+      </body>
+    </html>
   );
 }

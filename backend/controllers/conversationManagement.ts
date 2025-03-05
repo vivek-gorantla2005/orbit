@@ -67,7 +67,7 @@ export default class ConversationManagement {
 
             await kafka.send({
                 topic: "messages",
-                messages: [{ value: JSON.stringify(messageData) }]
+                messages: [{ value: JSON.stringify(messageData)}]
             });
 
             res.status(200).json({ message: "Message sent successfully", data: messageData });

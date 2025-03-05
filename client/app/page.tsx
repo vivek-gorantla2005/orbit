@@ -3,15 +3,14 @@ import React, { useState } from "react";
 import SideBar from "./components/SideBar";
 import PostCard from "./components/postCard";
 import RightSideBar from "./components/RightSideBar";
-import SocketManager from "./components/SocketProvider";
+import { useContext } from "react";
+import { SocketContext } from "./context/SocketCustomContext";
 
 
 export default function Home() {
-  const [notifications, setNotifications] = useState([]);
+  const {notifications} = useContext(SocketContext)
 
-  const handleNotification = (notification) => {
-    setNotifications((prev) => [...prev, notification]);
-  };
+  console.log('new notification: ',notifications)
 
   return (
     <div className="grid grid-cols-12 h-[83vh] m-1 gap-2 overflow-hidden">
@@ -39,7 +38,6 @@ export default function Home() {
       </div>
 
       {/* Socket Manager */}
-      <SocketManager onNotification={handleNotification} />
     </div>
   );
 }
