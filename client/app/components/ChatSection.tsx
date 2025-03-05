@@ -1,8 +1,11 @@
 'use client'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import axios from 'axios'
+import { BACKEND_ROUTE } from '@/backendRoutes'
+import { useSession } from 'next-auth/react'
 
 interface ChatSectionProps {
     chatUser: {
@@ -12,25 +15,44 @@ interface ChatSectionProps {
         avatar: string | null
     }
     onChatClose: () => void
+    messages: { senderId: string; content: string }[]
 }
 
-// Status color mapping
-const statusColors: Record<string, string> = {
-    online: "bg-green-500",
-    offline: "bg-yellow-400",
-    busy: "bg-red-500"
-};
+const ChatSection: React.FC<ChatSectionProps> = ({ chatUser, onChatClose, messages }) => {
+    const { data: session } = useSession();
+    const [message, setMessage] = useState("");
+    const [localMessages, setLocalMessages] = useState(messages);
 
-// Function to determine the correct status (defaults to "offline" if null)
-const getStatus = (status: string | null | undefined): string => {
-    return status && statusColors[status] ? status : "offline";
-};
+    useEffect(() => {
+        setLocalMessages((prevMessages) => {
+            const newMessages = messages.filter(
+                (msg) => !prevMessages.some((prevMsg) => prevMsg.content === msg.content && prevMsg.senderId === msg.senderId)
+            );
+            return [...prevMessages, ...newMessages];
+        });
+    }, [messages]);
 
-// Capitalize status text for display
-const formatStatus = (status: string) => status.charAt(0).toUpperCase() + status.slice(1);
+    const sendMessage = async () => {
+        if (!message.trim()) return;
 
-const ChatSection: React.FC<ChatSectionProps> = ({ chatUser, onChatClose }) => {
-    const userStatus = getStatus(chatUser.status); // Ensure valid status
+        const newMessage = {
+            senderId: session?.user?.id || "unknown",
+            receiverId: chatUser.id,
+            content: message,
+            messageType: "TEXT",
+            attachment: [],
+            sentAt: new Date().toISOString()
+        };
+
+        setLocalMessages((prev) => [...prev, newMessage]);
+        setMessage("");
+
+        try {
+            await axios.post(`${BACKEND_ROUTE}/api/sendMessage`, newMessage);
+        } catch (err) {
+            console.error("Error sending message:", err);
+        }
+    };
 
     return (
         <motion.div
@@ -40,29 +62,13 @@ const ChatSection: React.FC<ChatSectionProps> = ({ chatUser, onChatClose }) => {
             transition={{ duration: 0.3 }}
             className="m-0 p-0 h-full w-full bg-white shadow-lg flex flex-col"
         >
-            {/* Chat Header */}
             <div className="flex justify-between items-center border-b px-4 py-3 bg-gray-50">
                 <div className="flex items-center gap-3">
-                    {/* Avatar with Status Indicator */}
-                    <div className="relative w-12 h-12">
-                        <Avatar className="w-12 h-12">
-                            <AvatarImage src={chatUser.avatar ?? ""} />
-                            <AvatarFallback className="w-full h-full rounded-full bg-gray-800 text-white flex items-center justify-center font-bold">
-                                {chatUser.username.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>
-                        {/* Status Indicator */}
-                        <span 
-                            className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${statusColors[userStatus]}`} 
-                        />
-                    </div>
-
-                    <div>
-                        <p className="text-lg font-bold text-gray-900">{chatUser.username}</p>
-                        <p className={`text-sm font-medium ${statusColors[userStatus]} text-white px-2 py-0.5 rounded-lg`}>
-                            {formatStatus(userStatus)}
-                        </p>
-                    </div>
+                    <Avatar className="w-12 h-12">
+                        <AvatarImage src={chatUser.avatar ?? ""} />
+                        <AvatarFallback>{chatUser.username.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <p className="text-lg font-bold text-gray-900">{chatUser.username}</p>
                 </div>
 
                 <button onClick={onChatClose} className="p-2 text-gray-600 hover:text-red-500 transition">
@@ -70,18 +76,30 @@ const ChatSection: React.FC<ChatSectionProps> = ({ chatUser, onChatClose }) => {
                 </button>
             </div>
 
-            {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50">
-                <p className="text-sm text-gray-500 italic text-center">No messages yet.</p>
+                {localMessages.map((msg, index) => (
+                    <div
+                        key={index}
+                        className={`p-2 rounded-lg w-fit max-w-xs ${
+                            msg.senderId === session?.user?.id ? "ml-auto bg-blue-500 text-white" : "bg-gray-200 text-black"
+                        }`}
+                    >
+                        {msg.content}
+                    </div>
+                ))}
             </div>
 
-            {/* Chat Input */}
-            <div className="border-t px-4 py-3 bg-white">
+            <div className="border-t px-4 py-3 bg-white flex items-center">
                 <input
                     type="text"
                     placeholder="Type a message..."
                     className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
                 />
+                <button onClick={sendMessage} className="ml-2 px-4 py-2 bg-blue-500 text-white rounded-lg">
+                    Send
+                </button>
             </div>
         </motion.div>
     );

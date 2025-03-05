@@ -17,7 +17,7 @@ model User{
   token      String?
   createdAt  DateTime  @default(now())
 
-  userStatus String?
+  userStatus UserStatus? 
 
   followers Int   @default(0)
   following Int   @default(0)
@@ -81,7 +81,6 @@ model Notifications{
 
 model Conversation {
   id             String    @id @default(uuid())
-  conversationId String
   senderId       String
   receiverId     String
 
@@ -102,11 +101,52 @@ model Message {
   receiverId     String
   conversationId String
   content        String
+  messageType    MessageType
+  attachment     Attachment[]
+  isRead         Boolean    @default(false)
   createdAt      DateTime     @default(now())
 
   sender         User         @relation("MessagesSent", fields: [senderId], references: [id])
   receiver       User         @relation("MessagesReceived", fields: [receiverId], references: [id])
   conversation   Conversation @relation("ConversationMessages", fields: [conversationId], references: [id])
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  messageId  String   @unique
+  url        String
+  fileType   AttachmentType
+  createdAt  DateTime @default(now())
+
+  message    Message  @relation(fields: [messageId], references: [id])
+}
+
+model UserStatus {
+  id         String  @id @default(uuid())
+  userId     String  @unique
+  isOnline   Boolean @default(false)
+  lastSeen   DateTime?
+  user       User    @relation(fields: [userId], references: [id])
+}
+
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  GIF
+  EMOJI
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  AUDIO
+  GIF
+  DOCUMENT
+  OTHER
+  NONE
 }
 
 enum NotificationsType{

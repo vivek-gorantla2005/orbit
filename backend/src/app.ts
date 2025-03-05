@@ -5,6 +5,7 @@ import http from "http";
 import { Server } from "socket.io";
 import redis from "../lib/redisSetup";
 import {NotificationsConsumer} from '../controllers/NotificationsManagement'
+import ConversationManagement from "../controllers/conversationManagement";
 import router from '../routes/backendRoutes'
 dotenv.config();
 const app = express();
@@ -38,7 +39,7 @@ io.on("connection", async (socket) => {
 
         if (userId) {
             await redis.srem("onlineUsers", userId);
-            await redis.del(`socket:${socket.id}`);
+            await redis.del(`socket:${userId}`);
             console.log(`User ${userId} is now offline.`);
         }
 
@@ -47,6 +48,7 @@ io.on("connection", async (socket) => {
 });
 
 NotificationsConsumer.consumeFriendNotifications(io);
+ConversationManagement.consumeMessage(io)
 
 const port = process.env.PORT || 8000;
 server.listen(port, () => console.log(`🚀 Server running at http://localhost:${port}`));

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import UserManagement from '../controllers/userManagement';
 import FriendManagement from '../controllers/FriendsManagement'
 import NotificationsProducer from '../controllers/NotificationsManagement'
+import ConversationManagement from '../controllers/conversationManagement'
 const router = Router()
 
 //user management
@@ -20,4 +21,7 @@ router.get('/getFriends',FriendManagement.getFriends)
 //notifications
 router.post('/friendReqNotifications',NotificationsProducer.sendFriendNotifications)
 
+
+//conversations 
+router.post('/sendMessage',ConversationManagement.sendMessage)
 export default router

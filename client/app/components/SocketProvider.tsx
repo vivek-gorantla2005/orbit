@@ -4,7 +4,7 @@ import { io, Socket } from "socket.io-client";
 import { BACKEND_ROUTE } from "@/backendRoutes";
 import { useSession } from "next-auth/react";
 
-const SocketManager = ({ onNotification }) => {
+const SocketManager = ({ onNotification,onMessage}) => {
   const socketRef = useRef<Socket | null>(null);
   const { data: session } = useSession();
 
@@ -40,9 +40,12 @@ const SocketManager = ({ onNotification }) => {
     });
 
     socket.on("friend-request", (notification) => {
-      console.log("Friend Request:", notification);
       onNotification(notification);
     });
+
+    socket.on("message",(message)=>{
+      onMessage(message);
+    })
 
     return () => {
       if (socketRef.current) {
@@ -50,7 +53,7 @@ const SocketManager = ({ onNotification }) => {
         console.log("Socket disconnected");
       }
     };
-  }, [session?.user?.id, onNotification]);
+  }, [session?.user?.id, onNotification,onMessage]);
 
   return null;
 };
