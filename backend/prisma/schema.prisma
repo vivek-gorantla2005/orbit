@@ -95,6 +95,7 @@ model Conversation {
   @@unique([senderId, receiverId]) 
 }
 
+
 model Message {
   id             String       @id @default(uuid())
   senderId       String

@@ -46,7 +46,7 @@ const Page = () => {
                 {chatUser ? (
                     <ChatSection chatUser={chatUser} onChatClose={() => setChatUser(null)} messages={chatMessages} />
                 ) : (
-                    <img src="vec6.jpg" alt="" className="w-full h-full object-cover" />
+                    <img src="vec6.jpg" alt="" className="w-full h-[85vh] object-cover overflow-hidden" />
                 )}
             </main>
         </div>

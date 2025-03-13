@@ -24,4 +24,5 @@ router.post('/friendReqNotifications',NotificationsProducer.sendFriendNotificati
 
 //conversations 
 router.post('/sendMessage',ConversationManagement.sendMessage)
+router.get('/getMessages',ConversationManagement.getMessages)
 export default router

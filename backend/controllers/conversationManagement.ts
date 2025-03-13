@@ -63,6 +63,12 @@ export default class ConversationManagement {
                 sentAt: new Date().toISOString()
             };
 
+            await redis.hset(
+                `message:${senderId}:${receiverId}`,
+                messageData.sentAt,
+                JSON.stringify(messageData)
+            );
+            
             console.log("Sending message....", messageData);
 
             await kafka.send({
@@ -127,6 +133,12 @@ export default class ConversationManagement {
                     const userSocketId = await redis.get(`socket:${receiverId}`);
                     if (userSocketId) {
                         io.to(userSocketId).emit("message", messageData);
+
+                        await redis.hset(
+                            `message:${senderId}:${receiverId}`,
+                            messageData.sentAt,
+                            JSON.stringify(messageData)
+                        );
                         
                     }
                         await prisma.message.create({
@@ -152,6 +164,42 @@ export default class ConversationManagement {
             });
         } catch (err) {
             console.error("Error in Kafka consumer:", err);
+        }
+    }
+
+    public static async getMessages(req:Request,res:Response):Promise<void>{
+        const senderId = req.query.senderId as string;
+        const receiverId = req.query.receiverId as string;
+        if(!senderId || !receiverId){
+            res.status(400).json({message:"Missing senderId or receiverId"});
+            return;
+        }
+
+        try{
+            let conversation = await prisma.conversation.findFirst({
+                where: {
+                    OR: [
+                        { senderId:senderId,receiverId: receiverId },
+                        { senderId: receiverId, receiverId: senderId }
+                    ],
+                },
+                include:{
+                    messages:{
+                        orderBy:{
+                            createdAt: "asc"
+                        }
+                    }
+                }
+            });
+            
+            if(!conversation){
+                res.status(404).json({message:"Conversation not found"});
+                return;
+            }
+            res.status(200).json(conversation.messages);
+            return;
+        }catch(err){
+            res.status(500).json({message:"an error occured while getting messages"});
         }
     }
 }
