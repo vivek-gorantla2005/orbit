@@ -3,6 +3,10 @@ import UserManagement from '../controllers/userManagement';
 import FriendManagement from '../controllers/FriendsManagement'
 import NotificationsProducer from '../controllers/NotificationsManagement'
 import ConversationManagement from '../controllers/conversationManagement'
+import FileManager from '../controllers/FileManager'
+import { upload } from '../middleware/multer.middleware'
+import { connectDB } from '../lib/mongoDB_setup';
+
 const router = Router()
 
 //user management
@@ -25,4 +29,18 @@ router.post('/friendReqNotifications',NotificationsProducer.sendFriendNotificati
 //conversations 
 router.post('/sendMessage',ConversationManagement.sendMessage)
 router.get('/getMessages',ConversationManagement.getMessages)
+
+//filemanager
+router.post('/upload', upload.array('files'), FileManager.uploadFileCloudinary);
+
+router.get('/test-db', async (req, res) => {
+    const isConnected = await connectDB();
+    if (isConnected) {
+      res.status(200).json({ message: 'Database connected successfully' });
+    } else {
+      res.status(500).json({ message: 'Failed to connect to the database' });
+    }
+  });
+
+
 export default router

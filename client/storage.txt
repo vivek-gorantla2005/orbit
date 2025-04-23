@@ -1,0 +1,3 @@
+Cloud name=  dx1rpbut6
+api_key = 256968139267437
+api_secret = Z9e1Mj6urDaE8XRdoKpWlE0aTlM

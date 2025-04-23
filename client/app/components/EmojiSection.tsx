@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -8,36 +8,23 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
 import EmojiPicker from 'emoji-picker-react'
 
-const EmojiSection = ({ onClose }) => {
-    const [selectedEmoji, setSelectedEmoji] = useState(null)
-    const [copied, setCopied] = useState(false)
-
-    const handleEmojiClick = (emoji) => {
-        navigator.clipboard.writeText(emoji.emoji)
-        setSelectedEmoji(emoji.emoji)
-        setCopied(true)
-
-        // Reset copy message after 2 seconds
-        setTimeout(() => setCopied(false), 2000)
-    }
-
+const EmojiSection = ({ onClose, onSelectEmoji }) => {
     return (
         <AlertDialog open={true} onOpenChange={onClose}>
             <AlertDialogContent className="w-full">
                 <AlertDialogHeader>
                     <AlertDialogTitle>Select an Emoji</AlertDialogTitle>
-                    <AlertDialogDescription>Click on an emoji to copy it!</AlertDialogDescription>
+                    <AlertDialogDescription>Click on an emoji to insert it into the chat!</AlertDialogDescription>
                 </AlertDialogHeader>
 
                 {/* Emoji Picker */}
                 <div className="flex flex-col items-center">
-                    <EmojiPicker onEmojiClick={handleEmojiClick} />
-                    {copied && (
-                        <p className="text-green-600 mt-2">Copied: {selectedEmoji} ✅</p>
-                    )}
+                    <EmojiPicker onEmojiClick={(emojiObject) => {
+                        onSelectEmoji(emojiObject.emoji);
+                        onClose();
+                    }} />
                 </div>
 
                 <AlertDialogFooter>

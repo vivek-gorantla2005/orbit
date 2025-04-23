@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -9,6 +9,7 @@ import { useSession } from 'next-auth/react'
 import AttachSection from './AttachSection'
 import GifSection from './GifSection'
 import EmojiSection from './EmojiSection'
+import { NavContext } from '../context/NavContext'
 
 interface ChatSectionProps {
     chatUser: {
@@ -21,25 +22,39 @@ interface ChatSectionProps {
     messages: { senderId: string; content: string }[]
 }
 
+
 const ChatSection: React.FC<ChatSectionProps> = ({ chatUser, onChatClose, messages }) => {
     const { data: session } = useSession();
     const [message, setMessage] = useState("");
     const [localMessages, setLocalMessages] = useState(messages);
     const [open, setOpen] = useState(false)
     const [gifOpen, setGifOpen] = useState(false)
-    const [emojiOpen,setEmojiOpen] = useState(false)
+    const [emojiOpen, setEmojiOpen] = useState(false)
+    const handleAttachment = () => setOpen(true)
+    const handleGifAttachment = () => setGifOpen(true)
+    const handleEmoji = () => setEmojiOpen(true)
+    const { navControls, setNavControls } = useContext(NavContext);
+    const [onChatCloseState, setOnChatCloseState] = useState(false)
+    const [attachment, setAttachment] = useState<File | null>(null)
+    const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null)
 
-    const handleAttachment = () => {
-        setOpen(true)
-    }
+    useEffect(() => {
+        setNavControls(() => false);
+    }, [onChatClose])
 
-    const handleGifAttachment = () => {
-        setGifOpen(true)
-    }
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === 'e') {
+                event.preventDefault();
+                setEmojiOpen((prev) => !prev);
+            }
+        };
 
-    const handleEmoji = () => {
-        setEmojiOpen(true)
-    }
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
 
     const getMessages = async () => {
         if (!session?.user?.id) return;
@@ -61,8 +76,8 @@ const ChatSection: React.FC<ChatSectionProps> = ({ chatUser, onChatClose, messag
     }, [session?.user?.id, chatUser.id]);
 
     const sendMessage = async () => {
-        if (!message.trim()) return;
-        if (!session?.user?.id) return;
+        if (!message.trim() || !session?.user?.id) return;
+
         const newMessage = {
             senderId: session.user.id,
             receiverId: chatUser.id,
@@ -88,61 +103,131 @@ const ChatSection: React.FC<ChatSectionProps> = ({ chatUser, onChatClose, messag
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 300, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="m-0 p-0 h-[85vh] w-full bg-white shadow-lg flex flex-col"
+            className="m-0 p-0 h-[100vh] w-full bg-gradient-to-br from-blue-50 to-white shadow-lg flex flex-col"
         >
-            <div className="flex justify-between items-center border-b px-4 py-3 bg-gray-50">
+            <div className="flex justify-between items-center border-b px-4 py-3  bg-black">
                 <div className="flex items-center gap-3">
-                    <Avatar className="w-12 h-12">
+                    <Avatar className="w-10 h-10 rounded-full">
                         <AvatarImage src={chatUser.avatar ?? ""} />
-                        <AvatarFallback>{chatUser.username.charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback >{chatUser.username.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <p className="text-lg font-bold text-gray-900">{chatUser.username}</p>
+                    <p className="text-lg font-bold text-gray-900"><span className='text-white'>{chatUser.username}</span></p>
                 </div>
 
-                <button onClick={onChatClose} className="p-2 text-gray-600 hover:text-red-500 transition">
+                <button
+                    onClick={() => {
+                        setNavControls(true);
+                        onChatClose();
+                    }}
+                    className="p-2 text-gray-600 hover:text-red-500 transition"
+                >
                     <X size={20} />
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-black" style={{ backgroundImage: "url('/chat_wallpaper.jpg')" }}>
                 {localMessages.map((msg, index) => (
                     <div
                         key={index}
-                        className={`p-2 rounded-lg w-fit max-w-xs ${msg.senderId === session?.user?.id ? "ml-auto bg-blue-500 text-white" : "bg-gray-200 text-black"
+                        className={`p-3 rounded-xl w-fit max-w-xs shadow-md ${msg.senderId === session?.user?.id
+                            ? "ml-auto bg-black text-white shadow-gray-900 shadow-lg filter drop-shadow-lg"
+                            : "bg-gray-700 text-white shadow-purple-950 shadow-lg filter drop-shadow-lg"
                             }`}
                     >
-                        {msg.content}
+
+                        {(() => {
+                            if (
+                                msg.content.startsWith("http") &&
+                                (msg.content.includes(".gif") || msg.content.includes("tenor.com") || msg.content.includes("giphy.com"))
+                            ) {
+                                return <img src={msg.content} alt="GIF" className="rounded-lg max-w-full h-auto" />;
+                            } else if (
+                                msg.content.startsWith("http") &&
+                                (msg.content.includes(".png") || msg.content.includes(".jpg") || msg.content.includes(".jpeg"))
+                            ) {
+                                return <img src={msg.content} alt="Image" className="rounded-lg max-w-full h-auto" />;
+                            } else if(
+                                msg.content.startsWith("http") &&
+                                (msg.content.includes(".mp4") || msg.content.includes(".mov") || msg.content.includes(".avi"))
+                            ) {
+                                return <video src={msg.content} controls className="rounded-lg max-w-full h-auto" />;
+                            }
+                        else if (
+                            msg.content.startsWith("http") &&
+                            (msg.content.includes(".mp3") || msg.content.includes(".wav") || msg.content.includes(".aac"))
+                          ) {
+                            return (
+                              <audio controls className="rounded-lg max-w-full h-auto">
+                                <source src={msg.content} type={`audio/${msg.content.split('.').pop()}`} />
+                                Your browser does not support the audio element.
+                              </audio>
+                            );
+                          }  
+                             else {
+                                return (
+                           <div className="chat chat-start">
+                                        <div>{msg.content}</div>
+                                    </div>
+                                );
+                            }
+                        })()}
+
+
+
+                        {/* {msg.content.startsWith("http") && (msg.content.includes(".gif") || msg.content.includes("tenor.com") || msg.content.includes("giphy.com")) ? (
+                            <img src={msg.content} alt="GIF" className="rounded-lg max-w-full h-auto" />
+                        ) : (
+                            <div className="chat chat-start">
+                                <div>{msg.content}</div>
+                            </div>
+                        )}
+                        {msg.content.startsWith("http") && (msg.content.includes(".png") || msg.content.includes(".jpg") || msg.content.includes(".jpeg")) ? (
+                            <img src={msg.content} alt="Image" className="rounded-lg max-w-full h-auto" />
+                        ) : (
+                            <div className="chat chat-start">
+                            </div>
+                        )} */}
                     </div>
                 ))}
             </div>
 
-            <div className="border-t px-4 py-3 bg-white flex items-center relative">
+            <div className="border-t px-4 py-3 flex items-center relative">
                 <input
                     type="text"
                     placeholder="Type a message..."
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 pr-20"
+                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black pr-20"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            sendMessage();
+                        }
+                    }}
                 />
 
                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex gap-5 mr-2">
-                    <button onClick={sendMessage} className="text-gray-600 hover:text-gray-900">
+                    <button onClick={sendMessage} className="text-blue-600 hover:text-blue-900">
                         <img src="send.png" alt="send" width={20} height={20} />
                     </button>
-                    <button className="text-gray-600 hover:text-gray-900">
-                        <img src="laugh.png" alt="emoji" width={20} height={20} onClick={handleEmoji}/>
-                        {emojiOpen && <EmojiSection onClose={() => setEmojiOpen(false)} />}
+                    <button className="text-blue-600 hover:text-blue-900">
+                        <img src="laugh.png" alt="emoji" width={20} height={20} onClick={handleEmoji} />
+                        {emojiOpen && <EmojiSection onClose={() => setEmojiOpen(false)} onSelectEmoji={(emoji) => setMessage((prev) => prev + emoji)} />}
                     </button>
-                    <button className="text-gray-600 hover:text-gray-900">
+                    <button className="text-blue-600 hover:text-blue-900">
                         <img src="gif3.png" alt="gif" width={25} height={25} onClick={handleGifAttachment} />
                         {gifOpen && <GifSection onClose={() => setGifOpen(false)} onGifSelect={(gifUrl) => {
                             setMessage(gifUrl);
                             setGifOpen(false);
                         }} />}
                     </button>
-                    <div className="text-gray-600 hover:text-gray-900 cursor-pointer">
+                    <div className="text-blue-600 hover:text-blue-900 cursor-pointer">
                         <img src="attach.png" alt="attach" width={25} height={25} onClick={handleAttachment} />
-                        {open && <AttachSection onClose={() => setOpen(false)} />}
+                        {open && <AttachSection onClose={() => setOpen(false)} onSendAttachment={(attachment_Url) => {
+                            setAttachmentUrl(attachment_Url);
+                            setOpen(false);
+                            setMessage(attachment_Url);
+                        }} />}
                     </div>
                 </div>
             </div>

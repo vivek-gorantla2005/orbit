@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState,useCallback } from 'react'
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -13,10 +13,8 @@ import { GiphyFetch } from '@giphy/js-fetch-api'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-// Initialize GiphyFetch
 const gf = new GiphyFetch(process.env.NEXT_PUBLIC_GIPHY_API_KEY as string)
 
-// Categories
 const categories = ["Trending", "Happy", "Sad", "Angry", "Excited", "Funny"]
 
 const GifSection = ({ onClose, onGifSelect }) => {
@@ -55,7 +53,6 @@ const GifSection = ({ onClose, onGifSelect }) => {
                     <AlertDialogDescription>Choose a GIF based on your mood or search for one!</AlertDialogDescription>
                 </AlertDialogHeader>
 
-                {/* Search Bar */}
                 <div className="flex gap-2">
                     <Input
                         type="text"
@@ -69,7 +66,6 @@ const GifSection = ({ onClose, onGifSelect }) => {
                     </Button>
                 </div>
 
-                {/* Category Selection */}
                 <div className="flex flex-wrap gap-2 justify-center mt-3">
                     {categories.map((category) => (
                         <Button
@@ -86,24 +82,24 @@ const GifSection = ({ onClose, onGifSelect }) => {
                     ))}
                 </div>
 
-                {/* GIF Grid */}
                 <div className="overflow-auto max-h-[400px] min-h-[270px] flex justify-center items-center mt-4">
                     {loading ? (
-                        <div className="flex justify-center items-center min-h-[270px]">
+                        <div className="flex justify-center items-center min-h-[200px]">
                             <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
                         </div>
                     ) : (
                         <Grid
-                        key={searchTerm || selectedCategory}
-                        width={690}
-                        columns={3}
-                        fetchGifs={fetchGifs}
-                        onGifClick={(gif) => {
-                            onGifSelect(gif.images.original.url); // Now correctly sends GIF URL to `ChatSection`
-                            onClose();
-                        }}
-                    />
-                    
+                            key={searchTerm || selectedCategory}
+                            width={690}
+                            columns={3}
+                            fetchGifs={fetchGifs}
+                            onGifClick={(gif, event) => {
+                                event.preventDefault(); 
+                                event.stopPropagation();
+                                onGifSelect(gif.images.original.url);
+                                onClose();
+                            }}
+                        />
                     )}
                 </div>
 

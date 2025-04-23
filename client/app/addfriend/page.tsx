@@ -12,7 +12,7 @@ const Page = () => {
 
   useEffect(() => {
     if (!query) {
-      setUsers([]); // Clear users if query is empty
+      setUsers([]); 
       return;
     }
 

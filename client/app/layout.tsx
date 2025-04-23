@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import SessionProvider from "./components/SessionProvider";
 import SocketManager from "./components/SocketProvider";
 import { SocketContextProvider } from "./context/SocketCustomContext";
+import { NavContextProvider } from "./context/NavContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,11 +31,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SessionProvider>
+        <NavContextProvider>
           <SocketContextProvider> 
             <SocketManager />
             <Navbar />
             {children}
           </SocketContextProvider>
+          </NavContextProvider>
         </SessionProvider>
       </body>
     </html>
