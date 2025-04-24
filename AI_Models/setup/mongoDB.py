@@ -8,3 +8,11 @@ async def mongoDB_setup():
     db = client["test"]
     collection = db["uploads"]
     return collection
+
+async def mongoDB_setup2():
+    uri = "mongodb+srv://23eg105j66:DwvIAvGK2i7zxYKD@uploadmetadata.osy9ydb.mongodb.net/?retryWrites=true&w=majority"
+    client = AsyncMongoClient(uri)
+    db = client["upload_metadata"]
+    collection = db["uploads"]
+    return collection
+
