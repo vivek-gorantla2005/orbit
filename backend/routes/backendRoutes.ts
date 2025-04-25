@@ -29,6 +29,7 @@ router.post('/friendReqNotifications',NotificationsProducer.sendFriendNotificati
 //conversations 
 router.post('/sendMessage',ConversationManagement.sendMessage)
 router.get('/getMessages',ConversationManagement.getMessages)
+router.get('/todayConversations',ConversationManagement.TodayUserConversations)
 
 //filemanager
 router.post('/upload', upload.array('files'), FileManager.uploadFileCloudinary);

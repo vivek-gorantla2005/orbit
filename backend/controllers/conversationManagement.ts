@@ -202,4 +202,53 @@ export default class ConversationManagement {
             res.status(500).json({message:"an error occured while getting messages"});
         }
     }
+
+    public static async TodayUserConversations(req: Request, res: Response): Promise<void> {
+        const userId = req.query.userId as string;
+    
+        if (!userId) {
+            res.status(400).json({ message: "Missing userId" });
+            return;
+        }
+    
+        try {
+            const now = new Date();
+            const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+            const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    
+            const messages = await prisma.message.findMany({
+                where: {
+                    senderId: userId,
+                    createdAt: {
+                        gte: startOfDayUTC,
+                        lt: endOfDayUTC
+                    }
+                },
+                select: {
+                    receiverId: true
+                }
+            });
+    
+            const uniqueReceiverIds = [...new Set(messages.map(msg => msg.receiverId))];
+    
+            const users = await prisma.user.findMany({
+                where: {
+                    
+                    id: {
+                        in: uniqueReceiverIds
+                    }
+                },
+                select: {
+                    username: true 
+                }
+            });
+    
+            res.status(200).json(users);
+        } catch (err) {
+            console.error("Error fetching today's conversations:", err);
+            res.status(500).json({ message: "Error fetching today's conversations" });
+        }
+    }
+    
+    
 }

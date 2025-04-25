@@ -1,5 +1,6 @@
-import { BadgeCheck, Star, Trophy } from "lucide-react"; // Importing icons
-import { Users, UserCheck, FileText } from "lucide-react"; // Importing icons
+import { BadgeCheck, Star, Trophy } from "lucide-react";
+import { Users, UserCheck, FileText } from "lucide-react";
+import Link from "next/link";
 import React from 'react'
 import { Button } from "@/components/ui/button";
 
@@ -93,9 +94,11 @@ const Page = () => {
                 <div className="space-y-4 flex flex-col items-center">
                     <p className="font-extrabold text-gray-700 text-7xl">View Analytics</p>
                     <p className="text-gray-500 text-lg">Gain insights & track your growth!</p>
+                    <Link href='/analysis'>
                     <Button className="bg-gray-700 text-white font-bold px-6 py-2 rounded-lg shadow-md hover:bg-gray-900 transition">
                         Go To Analytics
                     </Button>
+                    </Link>
                 </div>
 
                 {/* Right Section - Centered Image */}
