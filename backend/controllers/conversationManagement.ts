@@ -11,12 +11,12 @@ export default class ConversationManagement {
     public static async sendMessage(req: Request, res: Response): Promise<void> {
         try {
             const { senderId, receiverId, content, messageType, attachment } = req.body;
-    
+
             if (!senderId || !receiverId) {
                 res.status(400).json({ message: "Missing senderId or receiverId" });
                 return;
             }
-    
+
             const sender = await prisma.user.findUnique({ where: { id: senderId } });
             const receiver = await prisma.user.findUnique({ where: { id: receiverId } });
 
@@ -68,12 +68,12 @@ export default class ConversationManagement {
                 messageData.sentAt,
                 JSON.stringify(messageData)
             );
-            
+
             console.log("Sending message....", messageData);
 
             await kafka.send({
                 topic: "messages",
-                messages: [{ value: JSON.stringify(messageData)}]
+                messages: [{ value: JSON.stringify(messageData) }]
             });
 
             res.status(200).json({ message: "Message sent successfully", data: messageData });
@@ -139,9 +139,9 @@ export default class ConversationManagement {
                             messageData.sentAt,
                             JSON.stringify(messageData)
                         );
-                        
+
                     }
-                        await prisma.message.create({
+                    await prisma.message.create({
                         data: {
                             senderId: messageData.senderId,
                             receiverId: messageData.receiverId,
@@ -150,72 +150,72 @@ export default class ConversationManagement {
                             messageType: messageData.messageType.toUpperCase() as MessageType,
                             attachment: messageData.attachment?.length
                                 ? {
-                                      create: messageData.attachment.map((att: any) => ({
-                                          url: att.url,
-                                          fileType: att.fileType.toUpperCase() as AttachmentType
-                                      }))
-                                  }
+                                    create: messageData.attachment.map((att: any) => ({
+                                        url: att.url,
+                                        fileType: att.fileType.toUpperCase() as AttachmentType
+                                    }))
+                                }
                                 : undefined
                         }
                     });
-                    
+
                     console.log("Message stored successfully!");
-            }
+                }
             });
         } catch (err) {
             console.error("Error in Kafka consumer:", err);
         }
     }
 
-    public static async getMessages(req:Request,res:Response):Promise<void>{
+    public static async getMessages(req: Request, res: Response): Promise<void> {
         const senderId = req.query.senderId as string;
         const receiverId = req.query.receiverId as string;
-        if(!senderId || !receiverId){
-            res.status(400).json({message:"Missing senderId or receiverId"});
+        if (!senderId || !receiverId) {
+            res.status(400).json({ message: "Missing senderId or receiverId" });
             return;
         }
 
-        try{
+        try {
             let conversation = await prisma.conversation.findFirst({
                 where: {
                     OR: [
-                        { senderId:senderId,receiverId: receiverId },
+                        { senderId: senderId, receiverId: receiverId },
                         { senderId: receiverId, receiverId: senderId }
                     ],
                 },
-                include:{
-                    messages:{
-                        orderBy:{
+                include: {
+                    messages: {
+                        orderBy: {
                             createdAt: "asc"
                         }
                     }
                 }
             });
-            
-            if(!conversation){
-                res.status(404).json({message:"Conversation not found"});
+
+            if (!conversation) {
+                res.status(404).json({ message: "Conversation not found" });
                 return;
             }
             res.status(200).json(conversation.messages);
             return;
-        }catch(err){
-            res.status(500).json({message:"an error occured while getting messages"});
+        } catch (err) {
+            res.status(500).json({ message: "an error occured while getting messages" });
         }
     }
 
     public static async TodayUserConversations(req: Request, res: Response): Promise<void> {
         const userId = req.query.userId as string;
-    
+
         if (!userId) {
             res.status(400).json({ message: "Missing userId" });
             return;
         }
-    
+
         try {
             const now = new Date();
             const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
             const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
-    
+
             const messages = await prisma.message.findMany({
                 where: {
                     senderId: userId,
@@ -228,27 +228,143 @@ export default class ConversationManagement {
                     receiverId: true
                 }
             });
-    
+
             const uniqueReceiverIds = [...new Set(messages.map(msg => msg.receiverId))];
-    
+
             const users = await prisma.user.findMany({
                 where: {
-                    
+
                     id: {
                         in: uniqueReceiverIds
                     }
                 },
                 select: {
-                    username: true 
+                    username: true
                 }
             });
-    
+
             res.status(200).json(users);
         } catch (err) {
             console.error("Error fetching today's conversations:", err);
             res.status(500).json({ message: "Error fetching today's conversations" });
         }
     }
+
+    public static async getUserConversations(req: Request, res: Response): Promise<void> {
+        const userId = req.query.userId as string;
     
+        if (!userId) {
+            res.status(400).json({ message: "userId not provided" });
+            return;
+        }
     
+        try {
+            const conversations = await prisma.conversation.findMany({
+                where: {
+                    OR: [
+                        { senderId: userId },
+                        { receiverId: userId }
+                    ],
+                },
+            });
+    
+            const formattedConversations = conversations.map(conv => {
+                const receiverId = conv.senderId === userId ? conv.receiverId : conv.senderId;
+                return {
+                    conversationId: conv.id,
+                    receiverId
+                };
+            });
+    
+            const ids = formattedConversations.map(conv => conv.receiverId);
+    
+            const users = await prisma.user.findMany({
+                where: {
+                    id: {
+                        in: ids
+                    }
+                },
+                select: {
+                    id: true,
+                    username: true
+                }
+            });
+    
+            const merged = formattedConversations.map(conv => {
+                const user = users.find(u => u.id === conv.receiverId);
+                return {
+                    conversationId: conv.conversationId,
+                    receiverId: conv.receiverId,
+                    username: user?.username || 'Unknown User'
+                };
+            });
+    
+            res.status(200).json({ conversations: merged });
+            return;
+    
+        } catch (err) {
+            console.error('Error fetching conversations:', err);
+            res.status(500).json({ message: "Error fetching conversations" });
+        }
+    }
+    
+
+    public static async getUserMessages(req: Request, res: Response): Promise<void> {
+        const userId = req.query.userId as string;
+
+        if (!userId) {
+            res.status(400).json({ message: "User ID is required" });
+            return;
+        }
+
+        try {
+            const now = new Date();
+            const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+            const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+            const messages = await prisma.message.findMany({
+                where: {
+                    senderId: userId,
+                    createdAt:{
+                        gte:startOfDayUTC,
+                        lt:endOfDayUTC
+                    }
+                },
+                select:{
+                    content:true
+                },
+                orderBy: {
+                    createdAt: "desc",
+                },
+            });
+
+            res.status(200).json({ data: messages });
+        } catch (err) {
+            console.error("Error fetching messages:", err);
+            res.status(500).json({ message: "Internal Server Error" });
+        }
+    }
+
+    public static async getTodayMessages(req: Request, res: Response): Promise<void> {
+        const userId = req.query.userId as string;
+
+        try{   
+            const now = new Date();
+            const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+            const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+
+            const messages = await prisma.message.findMany({
+                where: {
+                    senderId: userId,
+                    createdAt: {
+                        gte: startOfDayUTC,
+                        lt: endOfDayUTC
+                    }
+                },
+            });
+            res.status(200).json({message : "data fetched",messages})
+        }catch(err){
+            console.error("error retriving todays chats")
+        }
+    }
+
 }

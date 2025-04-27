@@ -16,17 +16,34 @@ const Page = () => {
     const [isVisible, setIsVisible] = useState(true)
     const { data: session } = useSession()
     const [memory, setMemory] = useState([])
+    const [loading, setLoading] = useState(false)
+    const today = new Date();
+    const formattedToday = today.toISOString().split('T')[0];
+
+    const getImages = async () => {
+        try {
+            const response = await axios.get(`http://127.0.0.1:8000/api/getMemory/${session?.user?.id}`)
+            setMemory(response.data?.data || [])
+        } catch (error) {
+            console.error("Error fetching images:", error)
+        }
+    }
+
+    const handleRefresh = async () => {
+        try {
+            setLoading(true)
+            await axios.get(`http://127.0.0.1:8000/api/performAnalysis/${session?.user?.id}`)
+            await axios.get(`http://127.0.0.1:8000/api/getUploads/${session?.user?.id}`)
+            await getImages()
+        } catch (error) {
+            console.error("Error refreshing memories:", error)
+        } finally {
+            setLoading(false)
+            window.location.reload()
+        }
+    }
 
     useEffect(() => {
-        const getImages = async () => {
-            try {
-                const response = await axios.get(`http://127.0.0.1:8000/api/getMemory/${session?.user?.id}`)
-                setMemory(response.data?.data || []) // Extract actual data
-            } catch (error) {
-                console.error("Error fetching images:", error)
-            }
-        }
-
         if (session?.user?.id) {
             getImages()
         }
@@ -64,10 +81,17 @@ const Page = () => {
                             </button>
                         </div>
                     </motion.div>
-                ) : (
+                ) : (<>
+                    <button className='h-10 w-44 bg-gray-700 font-extrabold rounded-3xl text-slate-50 m-4' onClick={handleRefresh}>Refresh Memories</button>
                     <>
-                        {memory.length === 0 ? (
+                        {loading ? (
+                            <div className="flex justify-center items-center h-screen">
+                                <p className="text-5xl font-bold text-gray-700">Loading Memories...</p>
+                            </div>
+                        ) : memory.length === 0 ? (
+                            
                             <div className='grid grid-cols-5 items-center max-h-screen mt-20'>
+                                <button className='h-10 w-44' onClick={handleRefresh}>Refresh Memories</button>
                                 <div className='col-span-3 flex justify-center items-center'>
                                     <img src="empty.jpg" alt="empty" width={700} height={700} />
                                 </div>
@@ -90,7 +114,6 @@ const Page = () => {
                                                                     <img
                                                                         src={upload.filePath}
                                                                         alt={upload.fileName}
-                                            
                                                                     />
                                                                 </CardContent>
                                                             </Card>
@@ -107,13 +130,16 @@ const Page = () => {
                                             {item.label} Pics
                                         </p>
                                         <p className='text-3xl font-bold text-gray-600 mt-2'>
-                                            Date : {new Date(item.timestamp).toLocaleDateString()}
+                                            Date : {formattedToday}
                                         </p>
                                     </div>
+
+                                   
                                 </div>
                             ))
                         )}
                     </>
+                </>
                 )}
             </AnimatePresence>
         </>

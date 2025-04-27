@@ -226,7 +226,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({ chatUser, onChatClose, messag
                         {open && <AttachSection onClose={() => setOpen(false)} onSendAttachment={(attachment_Url) => {
                             setAttachmentUrl(attachment_Url);
                             setOpen(false);
-                            setMessage(attachment_Url);
+                            setMessage("Images Sent");
                         }} />}
                     </div>
                 </div>

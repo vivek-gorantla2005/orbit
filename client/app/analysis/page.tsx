@@ -22,18 +22,19 @@ const Page = () => {
     }
 
     const data = [
-        { name: 'Jan', value: 30 },
-        { name: 'Feb', value: 20 },
-        { name: 'Mar', value: 40 },
-        { name: 'Apr', value: 35 },
-        { name: 'May', value: 50 },
+        { name: 'Mon', value: 30 },
+        { name: 'Tue', value: 20 },
+        { name: 'wed', value: 40 },
+        { name: 'thrus', value: 35 },
+        { name: 'Sat', value: 50 },
+        { name: 'Sun', value: 50 },
     ]
 
     const pieData = [
-        { name: 'Happy', value: 40 },
-        { name: 'Sad', value: 20 },
+        { name: 'Happy', value: 30 },
+        { name: 'Sad', value: 40 },
         { name: 'Excited', value: 15 },
-        { name: 'Anxious', value: 25 },
+        { name: 'Anxious', value: 15 },
     ]
 
     const COLORS = ['#34D399', '#F87171', '#60A5FA', '#FBBF24']
@@ -135,9 +136,9 @@ const Page = () => {
                     <div className="flex flex-col">
                         <p className="text-5xl text-gray-700 font-extrabold mt-20 mb-5">Recomendations</p>
                         <ul className='mt-3'>
-                            <li className='text-gray-800 font-extrabold text-xl'>Go for a Walk</li>
-                            <li className='text-gray-800 font-extrabold text-xl'>Practice Mindfulness</li>
-                            <li className='text-gray-800 font-extrabold text-xl'>Connect with Friends</li>
+                            <li className='text-gray-800 font-extrabold text-xl'>List to calm music</li>
+                            <li className='text-gray-800 font-extrabold text-xl'>Practise Mediataion </li>
+                            <li className='text-gray-800 font-extrabold text-xl'>Frequently spaeak with friends</li>
                         </ul>
                     </div>
 

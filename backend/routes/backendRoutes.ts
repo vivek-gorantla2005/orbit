@@ -6,6 +6,7 @@ import ConversationManagement from '../controllers/conversationManagement'
 import FileManager from '../controllers/FileManager'
 import { upload } from '../middleware/multer.middleware'
 import { connectDB } from '../lib/mongoDB_setup';
+import GoalManagement from '../controllers/Goal'
 
 const router = Router()
 
@@ -30,9 +31,16 @@ router.post('/friendReqNotifications',NotificationsProducer.sendFriendNotificati
 router.post('/sendMessage',ConversationManagement.sendMessage)
 router.get('/getMessages',ConversationManagement.getMessages)
 router.get('/todayConversations',ConversationManagement.TodayUserConversations)
+router.get('/getConversations',ConversationManagement.getUserConversations)
+router.get('/getUserMessages',ConversationManagement.getUserMessages)
+router.get('/getTodayMessages',ConversationManagement.getTodayMessages)
 
 //filemanager
 router.post('/upload', upload.array('files'), FileManager.uploadFileCloudinary);
+
+//goal manager
+router.post('/createGoal',GoalManagement.SetGoal);
+router.get('/getGoals',GoalManagement.getGoals);
 
 router.get('/test-db', async (req, res) => {
     const isConnected = await connectDB();

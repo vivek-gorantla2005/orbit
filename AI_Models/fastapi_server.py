@@ -2,15 +2,19 @@ from fastapi import FastAPI, HTTPException
 from bson import ObjectId
 from setup.mongoDB import mongoDB_setup, mongoDB_setup2
 from eventDetection.eventdetect import eventDetection
+import chatSummarizationModel
 import datetime
 import image_memory
 import labelling_model
+import journalModel
+import goalTacking 
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"]
+    allow_origins=["*"],
+    allow_methods=["*"]
 )
 # Helper function to convert MongoDB document to JSON-serializable dict
 def serialize_mongo_doc(doc):
@@ -23,13 +27,11 @@ def serialize_mongo_doc(doc):
 def hello_world():
     return {"message": "Hello World"}
 
-
 @app.get("/api/performAnalysis/{user_id}")
 async def perform_analysis(user_id: str):
     try:
         collection = await mongoDB_setup()
         results = await collection.find({"userId": user_id, "status": "pending"}).to_list(length=100)
-
         if not results:
             raise HTTPException(status_code=404, detail="No uploads found for this user")
 
@@ -131,7 +133,6 @@ async def get_uploads(user_id: str):
                 "label": event["label"],
                 "uploads": event["uploads"],
                 "eventDetected": True,
-                "timestamp": datetime.datetime.now().isoformat()
             })
 
         # Insert into the new collection
@@ -157,7 +158,6 @@ async def get_uploads(user_id: str):
 @app.get("/api/getMemory/{user_id}")
 async def get_memory(user_id: str):
     try:
-        # Fetch uploads from main collection
         collection = await mongoDB_setup2()
         results = await collection.find({
             "userId": user_id,
@@ -176,6 +176,36 @@ async def get_memory(user_id: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    
+@app.post("/api/goalProgress")
+def trackprogress(data: dict):
+    try:
+        goals = data.get("goals", {})
+        chat_history = data.get("chatHistory", [])
+        res = goalTacking.analyze_and_update_progress_with_gemini(goals, chat_history)
+        print(res)
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    
+@app.post('/api/generateJournal')
+def generateJournal(data:dict):
+    data = journalModel.analyze_conversation(data)
+    return data
+
+@app.post('/api/generateSum')
+def genSum(data:dict):
+    print(data)
+    data = journalModel.summarize_all_conversations(data["messages"])
+    return data
+    
+@app.post("/api/generateSummary")
+async def gensum(data: dict):
+    summary = chatSummarizationModel.summarize(data["messages"]) 
+    print(summary)
+    return {"summary": summary}
+
+
 
 
 if __name__ == "__main__":
